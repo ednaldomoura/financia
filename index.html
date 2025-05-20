@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Financeiro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(30px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    .animate-fade-in {
+      animation: fade-in 0.8s cubic-bezier(.4,0,.2,1) both;
+    }
+    .card {
+      @apply rounded-xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform duration-300 bg-white dark:bg-blue-900 dark:text-white;
+    }
+    .card:hover {
+      @apply scale-105;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-blue-900 dark:bg-blue-950 dark:text-white transition-colors duration-500 min-h-screen" id="body">
+
+  <header class="flex justify-between items-center p-4 bg-gradient-to-r from-pink-500 via-yellow-400 to-green-400 text-white shadow-lg animate-pulse">
+    <h1 class="text-2xl font-bold drop-shadow-lg tracking-wide">Dashboard Financeiro</h1>
+    <button id="toggleTheme" class="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-pink-500 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform">
+      <span id="themeIcon" class="material-icons align-middle">dark_mode</span>
+      <span id="themeText">Modo Escuro</span>
+    </button>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-4">
+    <section id="authSection" class="max-w-md mx-auto my-8 p-8 border-4 border-pink-400 rounded-xl shadow-2xl bg-gradient-to-br from-yellow-100 via-pink-100 to-green-100 animate-fade-in">
+      <h2 class="text-2xl mb-4 text-center font-semibold">Login / Cadastro</h2>
+      <form id="authForm" class="flex flex-col gap-4">
+        <input type="text" id="username" placeholder="Usuário" required class="p-3 border rounded focus:ring-2 focus:ring-pink-400"/>
+        <input type="password" id="password" placeholder="Senha" required class="p-3 border rounded focus:ring-2 focus:ring-pink-400"/>
+        <div class="flex justify-between items-center">
+          <button type="submit" class="bg-gradient-to-r from-pink-500 to-yellow-400 text-white px-6 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Entrar / Cadastrar</button>
+          <small class="text-sm">Será criado novo usuário se não existir.</small>
+        </div>
+      </form>
+      <p id="authMessage" class="mt-2 text-center text-red-600"></p>
+    </section>
+
+    <section id="appSection" class="hidden animate-fade-in">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+        <div>
+          <h2 class="text-xl font-semibold">Olá, <span id="displayUser"></span></h2>
+          <button id="logoutBtn" class="text-sm text-blue-700 hover:underline mt-1">Sair</button>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <div class="card bg-gradient-to-br from-green-100 to-green-300 dark:from-blue-800 dark:to-blue-900">
+            <span class="material-icons text-green-600 dark:text-green-300 text-3xl mb-1">account_balance_wallet</span>
+            <div class="text-lg font-bold">Saldo</div>
+            <div id="cardSaldo" class="text-2xl font-mono"></div>
+          </div>
+          <div class="card bg-gradient-to-br from-blue-100 to-blue-300 dark:from-blue-900 dark:to-blue-800">
+            <span class="material-icons text-blue-600 dark:text-blue-300 text-3xl mb-1">trending_up</span>
+            <div class="text-lg font-bold">Entradas</div>
+            <div id="cardEntradas" class="text-2xl font-mono"></div>
+          </div>
+          <div class="card bg-gradient-to-br from-pink-100 to-pink-300 dark:from-pink-900 dark:to-pink-800">
+            <span class="material-icons text-pink-600 dark:text-pink-300 text-3xl mb-1">trending_down</span>
+            <div class="text-lg font-bold">Saídas</div>
+            <div id="cardSaidas" class="text-2xl font-mono"></div>
+          </div>
+          <div class="card bg-gradient-to-br from-yellow-100 to-yellow-300 dark:from-yellow-900 dark:to-yellow-800">
+            <span class="material-icons text-yellow-600 dark:text-yellow-300 text-3xl mb-1">receipt_long</span>
+            <div class="text-lg font-bold">Transações</div>
+            <div id="cardTransacoes" class="text-2xl font-mono"></div>
+          </div>
+        </div>
+      </div>
+
+      <form id="transactionForm" class="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+        <input type="date" id="date" class="p-2 border rounded focus:ring-2 focus:ring-pink-400" required />
+        <input type="text" id="desc" placeholder="Descrição" class="p-2 border rounded focus:ring-2 focus:ring-pink-400" required />
+        <input type="number" id="amount" placeholder="Valor (ex: 100)" class="p-2 border rounded focus:ring-2 focus:ring-pink-400" required step="0.01" />
+        <select id="type" class="p-2 border rounded focus:ring-2 focus:ring-pink-400" required>
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select>
+        <button type="submit" class="bg-gradient-to-r from-pink-500 to-yellow-400 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Adicionar</button>
+      </form>
+
+      <div class="mb-4 flex flex-col md:flex-row md:items-center md:gap-4 gap-2">
+        <label>Filtrar Período:</label>
+        <input type="date" id="filterStart" class="p-2 border rounded focus:ring-2 focus:ring-pink-400" />
+        <input type="date" id="filterEnd" class="p-2 border rounded focus:ring-2 focus:ring-pink-400" />
+        <input type="text" id="filterDesc" placeholder="Buscar descrição" class="p-2 border rounded focus:ring-2 focus:ring-pink-400" />
+        <button id="clearFilter" class="bg-gradient-to-r from-yellow-200 to-pink-200 text-gray-800 px-3 py-1 rounded hover:scale-105 transition-transform">Limpar</button>
+      </div>
+
+      <div class="overflow-x-auto mb-6 max-h-72">
+        <table class="w-full text-left border-collapse border-4 border-pink-400 shadow-xl bg-white dark:bg-blue-900">
+          <thead class="sticky top-0 z-10">
+            <tr class="bg-gradient-to-r from-yellow-200 via-pink-200 to-green-200 dark:from-blue-800 dark:via-pink-900 dark:to-green-900">
+              <th class="border border-pink-400 p-2">Data</th>
+              <th class="border border-pink-400 p-2">Descrição</th>
+              <th class="border border-pink-400 p-2">Valor</th>
+              <th class="border border-pink-400 p-2">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="transactionTable"></tbody>
+          <tfoot>
+            <tr class="bg-gradient-to-r from-pink-200 to-yellow-200 font-bold dark:from-pink-900 dark:to-yellow-900">
+              <td colspan="2" class="p-2 border border-pink-400 text-right">Saldo:</td>
+              <td id="balance" class="p-2 border border-pink-400"></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white dark:bg-blue-900 rounded-xl shadow-lg p-4">
+          <canvas id="monthlyChart" height="120"></canvas>
+        </div>
+        <div class="bg-white dark:bg-blue-900 rounded-xl shadow-lg p-4">
+          <canvas id="pieChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <button id="exportCsv" class="bg-gradient-to-r from-pink-500 to-yellow-400 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Exportar CSV</button>
+        <button id="exportPdf" class="bg-gradient-to-r from-pink-500 to-yellow-400 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Exportar PDF</button>
+      </div>
+    </section>
+  </main>
+
+<script>
+  (() => {
+    // Usar IIFE para isolar escopo
+
+    // DOM Elements
+    const body = document.getElementById('body');
+    const toggleThemeBtn = document.getElementById('toggleTheme');
+    const authSection = document.getElementById('authSection');
+    const authForm = document.getElementById('authForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const authMessage = document.getElementById('authMessage');
+    const appSection = document.getElementById('appSection');
+    const displayUser = document.getElementById('displayUser');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const transactionForm = document.getElementById('transactionForm');
+    const dateInput = document.getElementById('date');
+    const descInput = document.getElementById('desc');
+    const amountInput = document.getElementById('amount');
+    const typeInput = document.getElementById('type');
+    const transactionTable = document.getElementById('transactionTable');
+    const balanceEl = document.getElementById('balance');
+    const filterStart = document.getElementById('filterStart');
+    const filterEnd = document.getElementById('filterEnd');
+    const filterDesc = document.getElementById('filterDesc');
+    const clearFilterBtn = document.getElementById('clearFilter');
+    const exportCsvBtn = document.getElementById('exportCsv');
+    const exportPdfBtn = document.getElementById('exportPdf');
+    const monthlyChartCanvas = document.getElementById('monthlyChart');
+    const pieChartCanvas = document.getElementById('pieChart');
+
+    // Dados do usuário logado
+    let currentUser = null;
+
+    // Transações atuais em memória
+    let transactions = [];
+
+    // Chart instances
+    let monthlyChart = null;
+    let pieChart = null;
+
+    // --------- Funções ---------
+
+    // Salvar tema
+    function saveTheme(theme) {
+      localStorage.setItem('theme', theme);
+    }
+    // Aplicar tema
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        body.classList.add('bg-blue-900', 'text-white');
+        body.classList.remove('bg-white', 'text-blue-900');
+        document.getElementById('themeIcon').textContent = 'light_mode';
+        document.getElementById('themeText').textContent = 'Modo Claro';
+      } else {
+        body.classList.add('bg-white', 'text-blue-900');
+        body.classList.remove('bg-blue-900', 'text-white');
+        document.getElementById('themeIcon').textContent = 'dark_mode';
+        document.getElementById('themeText').textContent = 'Modo Escuro';
+      }
+      saveTheme(theme);
+    }
+    // Alternar tema
+    toggleThemeBtn.addEventListener('click', () => {
+      const currentTheme = localStorage.getItem('theme') || 'light';
+      applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+    });
+
+    // Inicializar tema no carregamento
+    (function initTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      applyTheme(savedTheme);
+    })();
+
+    // Salvar usuários
+    function saveUsers(users) {
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+    // Recuperar usuários
+    function getUsers() {
+      const usersStr = localStorage.getItem('users');
+      if (!usersStr) return [];
+      try {
+        return JSON.parse(usersStr);
+      } catch {
+        return [];
+      }
+    }
+    // Salvar sessões
+    function saveSession(username) {
+      localStorage.setItem('sessionUser', username);
+    }
+    function getSession() {
+      return localStorage.getItem('sessionUser');
+    }
+    function clearSession() {
+      localStorage.removeItem('sessionUser');
+    }
+
+    // Salvar transações do usuário
+    function saveTransactions(username, trans) {
+      localStorage.setItem('transactions_' + username, JSON.stringify(trans));
+    }
+    function getTransactions(username) {
+      const data = localStorage.getItem('transactions_' + username);
+      if (!data) return [];
+      try {
+        return JSON.parse(data);
+      } catch {
+        return [];
+      }
+    }
+
+    // Autenticação simples (login / cadastro)
+    authForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      if (!username || !password) {
+        authMessage.textContent = 'Preencha todos os campos!';
+        return;
+      }
+
+      let users = getUsers();
+      let user = users.find(u => u.username === username);
+
+      if (user) {
+        if (user.password !== password) {
+          authMessage.textContent = 'Senha incorreta!';
+          return;
+        }
+        // Login OK
+      } else {
+        // Criar novo usuário
+        users.push({ username, password });
+        saveUsers(users);
+      }
+      currentUser = username;
+      saveSession(currentUser);
+      authMessage.textContent = '';
+      showApp();
+    });
+
+    // Mostrar app
+    function showApp() {
+      authSection.classList.add('hidden');
+      appSection.classList.remove('hidden');
+      displayUser.textContent = currentUser;
+      loadTransactions();
+      updateTable();
+      updateResumo(transactions);
+      updateChart();
+      updatePieChart();
+    }
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      currentUser = null;
+      clearSession();
+      transactions = [];
+      appSection.classList.add('hidden');
+      authSection.classList.remove('hidden');
+      usernameInput.value = '';
+      passwordInput.value = '';
+      authMessage.textContent = '';
+      clearFilter();
+      if(monthlyChart) monthlyChart.destroy();
+      if(pieChart) pieChart.destroy();
+    });
+
+    // Carregar transações do usuário
+    function loadTransactions() {
+      if (!currentUser) return;
+      transactions = getTransactions(currentUser);
+    }
+
+    // Salvar transações do usuário
+    function saveUserTransactions() {
+      if (!currentUser) return;
+      saveTransactions(currentUser, transactions);
+    }
+
+    // Adicionar transação
+    transactionForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const date = dateInput.value;
+      const desc = descInput.value.trim();
+      let amount = parseFloat(amountInput.value);
+      const type = typeInput.value;
+      if (!date || !desc || isNaN(amount)) {
+        alert('Preencha todos os campos corretamente!');
+        return;
+      }
+      if (type === 'saida' && amount > 0) amount = -amount;
+      if (type === 'entrada' && amount < 0) amount = Math.abs(amount);
+      transactions.push({ date, desc, amount, id: Date.now(), type });
+      saveUserTransactions();
+      updateTable();
+      updateResumo(transactions);
+      updateChart();
+      updatePieChart();
+      transactionForm.reset();
+    });
+
+    // Atualizar tabela
+    function updateTable() {
+      let filtered = filterTransactions();
+      transactionTable.innerHTML = '';
+      let balance = 0;
+      filtered.forEach(t => {
+        balance += t.amount;
+        const tr = document.createElement('tr');
+        tr.classList.add('border', 'border-pink-400', 'hover:bg-pink-50', 'transition-colors', 'duration-300');
+        tr.innerHTML = `
+          <td class="p-2 border border-pink-400">${t.date}</td>
+          <td class="p-2 border border-pink-400">${t.desc}</td>
+          <td class="p-2 border border-pink-400 ${t.amount < 0 ? 'text-red-600' : 'text-green-600'}">${t.amount.toFixed(2)}</td>
+          <td class="p-2 border border-pink-400">
+            <button class="deleteBtn text-red-600 hover:underline" data-id="${t.id}">Excluir</button>
+          </td>
+        `;
+        transactionTable.appendChild(tr);
+      });
+      balanceEl.textContent = balance.toFixed(2);
+      balanceEl.className = balance < 0 ? 'text-red-700 font-bold' : 'text-green-700 font-bold';
+      // Atualizar cards resumo
+      updateResumo(filtered);
+      // Botão de excluir
+      document.querySelectorAll('.deleteBtn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = Number(e.target.getAttribute('data-id'));
+          transactions = transactions.filter(t => t.id !== id);
+          saveUserTransactions();
+          updateTable();
+          updateResumo(transactions);
+          updateChart();
+          updatePieChart();
+        });
+      });
+    }
+
+    // Atualizar resumo nos cards
+    function updateResumo(transacoes) {
+      const totalEntradas = transacoes.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0);
+      const totalSaidas = transacoes.filter(t => t.amount < 0).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+      const saldo = totalEntradas - totalSaidas;
+      document.getElementById('cardEntradas').textContent = totalEntradas.toFixed(2);
+      document.getElementById('cardSaidas').textContent = totalSaidas.toFixed(2);
+      document.getElementById('cardSaldo').textContent = saldo.toFixed(2);
+      document.getElementById('cardTransacoes').textContent = transacoes.length;
+    }
+
+    // Filtrar transações pelo período e descrição
+    function filterTransactions() {
+      let filtered = transactions.slice();
+      const start = filterStart.value;
+      const end = filterEnd.value;
+      const desc = filterDesc.value.trim().toLowerCase();
+      if (start) {
+        filtered = filtered.filter(t => t.date >= start);
+      }
+      if (end) {
+        filtered = filtered.filter(t => t.date <= end);
+      }
+      if (desc) {
+        filtered = filtered.filter(t => t.desc.toLowerCase().includes(desc));
+      }
+      return filtered;
+    }
+
+    filterStart.addEventListener('change', () => {
+      updateTable();
+      updateResumo(filterTransactions());
+      updateChart();
+      updatePieChart();
+    });
+    filterEnd.addEventListener('change', () => {
+      updateTable();
+      updateResumo(filterTransactions());
+      updateChart();
+      updatePieChart();
+    });
+    filterDesc.addEventListener('input', () => {
+      updateTable();
+      updateResumo(filterTransactions());
+      updateChart();
+      updatePieChart();
+    });
+    clearFilterBtn.addEventListener('click', () => {
+      clearFilter();
+      updateTable();
+      updateResumo(transactions);
+      updateChart();
+      updatePieChart();
+    });
+
+    function clearFilter() {
+      filterStart.value = '';
+      filterEnd.value = '';
+      filterDesc.value = '';
+    }
+
+    // Atualizar gráfico mensal (linha)
+    function updateChart() {
+      const filtered = filterTransactions();
+      let sums = {};
+      filtered.forEach(t => {
+        let d = new Date(t.date);
+        if (isNaN(d)) return;
+        let key = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
+        sums[key] = (sums[key] || 0) + t.amount;
+      });
+      let labels = Object.keys(sums).sort();
+      let dataPoints = labels.map(label => sums[label]);
+      if (monthlyChart) monthlyChart.destroy();
+      monthlyChart = new Chart(monthlyChartCanvas, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Saldo Mensal',
+            data: dataPoints,
+            borderColor: '#f43f5e',
+            backgroundColor: 'rgba(244,63,94,0.3)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 6,
+            pointBackgroundColor: '#f59e42',
+            pointBorderColor: '#fff',
+            pointHoverRadius: 10,
+            pointHoverBackgroundColor: '#fbbf24',
+          }]
+        },
+        options: {
+          responsive: true,
+          animation: {
+            duration: 1200,
+            easing: 'easeInOutBounce'
+          },
+          scales: {
+            y: { beginAtZero: true }
+          },
+          plugins: {
+            legend: { display: true },
+            tooltip: { enabled: true },
+          }
+        }
+      });
+    }
+
+    // Gráfico de Pizza por categoria vibrante
+    function updatePieChart() {
+      const filtered = filterTransactions();
+      let categories = {};
+      let entrada = 0;
+      let saida = 0;
+      filtered.forEach(t => {
+        let category = t.desc.split(' ')[0];
+        categories[category] = (categories[category] || 0) + t.amount;
+        if (t.amount >= 0) entrada += t.amount;
+        else saida += Math.abs(t.amount);
+      });
+      categories['Entradas'] = entrada;
+      categories['Saídas'] = saida;
+      let labels = Object.keys(categories);
+      let dataPoints = labels.map(label => categories[label]);
+      let palette = [
+        '#f43f5e','#f59e42','#fbbf24','#22d3ee','#34d399','#a78bfa','#f472b6','#facc15','#38bdf8','#4ade80',
+        '#e11d48','#f97316','#fde047','#0ea5e9','#059669','#7c3aed','#be185d','#fcd34d','#06b6d4','#84cc16'
+      ];
+      let colors = labels.map((_, i) => palette[i % palette.length]);
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(pieChartCanvas, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data: dataPoints,
+            backgroundColor: colors,
+            borderColor: '#fff',
+            borderWidth: 2,
+            hoverOffset: 16
+          }]
+        },
+        options: {
+          responsive: true,
+          animation: {
+            animateScale: true,
+            animateRotate: true
+          },
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { color: '#333', font: { weight: 'bold' } } },
+            tooltip: {
+              callbacks: {
+                label: function(tooltipItem) {
+                  let label = tooltipItem.label || '';
+                  if (label) label += ': ';
+                  label += tooltipItem.raw.toFixed(2);
+                  return label;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Exportar CSV
+    exportCsvBtn.addEventListener('click', () => {
+      const filtered = filterTransactions();
+      if(filtered.length === 0){
+        alert('Nenhuma transação para exportar.');
+        return;
+      }
+      const header = ['Data', 'Descrição', 'Valor'];
+      const rows = filtered.map(t => [t.date, t.desc, t.amount.toFixed(2)]);
+      let csvContent = "data:text/csv;charset=utf-8," + [header, ...rows].map(e => e.join(",")).join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `transacoes_${currentUser}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // Exportar PDF
+    exportPdfBtn.addEventListener('click', () => {
+      const filtered = filterTransactions();
+      if(filtered.length === 0){
+        alert('Nenhuma transação para exportar.');
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text("Relatório de Transações", 14, 22);
+      doc.setFontSize(12);
+      doc.text(`Usuário: ${currentUser}`, 14, 30);
+      const startY = 40;
+      let y = startY;
+      doc.setFillColor(37, 99, 235);
+      doc.setTextColor(255,255,255);
+      doc.rect(14, y - 8, 182, 10, 'F');
+      doc.text("Data", 16, y);
+      doc.text("Descrição", 50, y);
+      doc.text("Valor", 160, y);
+      doc.setTextColor(0,0,0);
+      y += 10;
+      filtered.forEach(t => {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(t.date, 16, y);
+        doc.text(t.desc, 50, y);
+        doc.text(t.amount.toFixed(2), 160, y);
+        y += 8;
+      });
+      const total = filtered.reduce((acc, t) => acc + t.amount, 0);
+      y += 10;
+      doc.setFontSize(14);
+      doc.text(`Saldo total: ${total.toFixed(2)}`, 14, y);
+      doc.save(`relatorio_${currentUser}.pdf`);
+    });
+
+    // Inicializar app se já houver sessão
+    (function init() {
+      const savedUser = getSession();
+      if (savedUser) {
+        currentUser = savedUser;
+        showApp();
+      }
+    })();
+
+  })();
+</script>
+
+</body>
+</html>
