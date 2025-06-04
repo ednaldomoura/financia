@@ -134,6 +134,11 @@
       <div class="flex gap-4">
         <button id="exportCsv" class="bg-blue-600 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Exportar CSV</button>
         <button id="exportPdf" class="bg-blue-600 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Exportar PDF</button>
+        <button id="showReport" class="bg-blue-100 text-blue-900 px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold border border-blue-300">Relatório</button>
+      </div>
+      <div id="reportSection" class="hidden mt-8 bg-gray-50 border border-gray-200 rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold mb-4">Relatório de Cartões</h3>
+        <div id="reportContent"></div>
       </div>
     </section>
   </main>
@@ -168,6 +173,9 @@
     const exportPdfBtn = document.getElementById('exportPdf');
     const monthlyChartCanvas = document.getElementById('monthlyChart');
     const pieChartCanvas = document.getElementById('pieChart');
+    const showReportBtn = document.getElementById('showReport');
+    const reportSection = document.getElementById('reportSection');
+    const reportContent = document.getElementById('reportContent');
 
     // Dados do usuário logado
     let currentUser = null;
@@ -574,6 +582,37 @@
       doc.text(`Saldo total: ${total.toFixed(2)}`, 14, y);
       doc.save(`relatorio_${currentUser}.pdf`);
     });
+
+    // Relatório por Cartão
+    showReportBtn.addEventListener('click', () => {
+      gerarRelatorioCartoes();
+      reportSection.classList.toggle('hidden');
+    });
+
+    function gerarRelatorioCartoes() {
+      const filtered = filterTransactions();
+      let debito = filtered.filter(t => t.payment === 'debito');
+      let credito = filtered.filter(t => t.payment === 'credito');
+      let totalDebito = debito.reduce((acc, t) => acc + t.amount, 0);
+      let totalCredito = credito.reduce((acc, t) => acc + t.amount, 0);
+      let html = `
+        <div class="mb-4">
+          <span class="font-semibold">Total Débito:</span> <span class="${totalDebito < 0 ? 'text-red-600' : 'text-green-600'}">${totalDebito.toFixed(2)}</span>
+        </div>
+        <div class="mb-4">
+          <span class="font-semibold">Total Crédito:</span> <span class="${totalCredito < 0 ? 'text-red-600' : 'text-green-600'}">${totalCredito.toFixed(2)}</span>
+        </div>
+        <div class="mb-2 font-semibold">Transações Débito:</div>
+        <ul class="mb-4 list-disc ml-6">
+          ${debito.map(t => `<li>${t.date} - ${t.desc} - <span class='${t.amount < 0 ? 'text-red-600' : 'text-green-600'}'>${t.amount.toFixed(2)}</span></li>`).join('') || '<li>Nenhuma</li>'}
+        </ul>
+        <div class="mb-2 font-semibold">Transações Crédito:</div>
+        <ul class="mb-2 list-disc ml-6">
+          ${credito.map(t => `<li>${t.date} - ${t.desc} - <span class='${t.amount < 0 ? 'text-red-600' : 'text-green-600'}'>${t.amount.toFixed(2)}</span></li>`).join('') || '<li>Nenhuma</li>'}
+        </ul>
+      `;
+      reportContent.innerHTML = html;
+    }
 
     // Inicializar app se já houver sessão
     (function init() {
