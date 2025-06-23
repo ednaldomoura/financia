@@ -31,25 +31,10 @@
   </header>
 
   <main class="max-w-5xl mx-auto p-4">
-    <section id="authSection" class="max-w-md mx-auto my-8 p-8 border-4 border-gray-200 rounded-xl shadow-2xl bg-white animate-fade-in">
-      <h2 class="text-2xl mb-4 text-center font-semibold">Login / Cadastro</h2>
-      <form id="authForm" class="flex flex-col gap-4">
-        <input type="text" id="username" placeholder="Usuário" required class="p-3 border rounded focus:ring-2 focus:ring-blue-400"/>
-        <input type="password" id="password" placeholder="Senha" required class="p-3 border rounded focus:ring-2 focus:ring-blue-400"/>
-        <div class="flex justify-between items-center">
-          <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Entrar / Cadastrar</button>
-          <small class="text-sm">Será criado novo usuário se não existir.</small>
-        </div>
-      </form>
-      <p id="authMessage" class="mt-2 text-center text-red-600"></p>
-    </section>
-
-    <section id="appSection" class="hidden animate-fade-in">
-      <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+    <section id="appSection" class="animate-fade-in"> <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <div>
-          <h2 class="text-xl font-semibold">Olá, <span id="displayUser"></span></h2>
-          <button id="logoutBtn" class="text-sm text-blue-700 hover:underline mt-1">Sair</button>
-        </div>
+          <h2 class="text-xl font-semibold">Olá, <span id="displayUser">Usuário</span></h2>
+          </div>
         <div class="flex flex-wrap gap-4">
           <div class="card bg-white border border-gray-200">
             <span class="material-icons text-green-600 text-3xl mb-1">account_balance_wallet</span>
@@ -83,10 +68,12 @@
           <option value="saida">Saída</option>
         </select>
         <div class="flex flex-col">
-          <label for="payment" class="mb-1 text-sm font-semibold text-blue-900">Cartão</label>
+          <label for="payment" class="mb-1 text-sm font-semibold text-blue-900">Forma de Pagamento</label>
           <select id="payment" class="p-2 border rounded focus:ring-2 focus:ring-blue-400" required>
             <option value="debito">Débito</option>
             <option value="credito">Crédito</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="aplicacoes">Aplicações</option>
           </select>
         </div>
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold">Adicionar</button>
@@ -137,7 +124,7 @@
         <button id="showReport" class="bg-blue-100 text-blue-900 px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform font-semibold border border-blue-300">Relatório</button>
       </div>
       <div id="reportSection" class="hidden mt-8 bg-gray-50 border border-gray-200 rounded-xl shadow-lg p-6">
-        <h3 class="text-xl font-bold mb-4">Relatório de Cartões</h3>
+        <h3 class="text-xl font-bold mb-4">Relatório por Forma de Pagamento</h3>
         <div id="reportContent"></div>
       </div>
     </section>
@@ -149,14 +136,14 @@
 
     // DOM Elements
     const body = document.getElementById('body');
-    const authSection = document.getElementById('authSection');
-    const authForm = document.getElementById('authForm');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const authMessage = document.getElementById('authMessage');
+    // const authSection = document.getElementById('authSection'); // Removido
+    // const authForm = document.getElementById('authForm'); // Removido
+    // const usernameInput = document.getElementById('username'); // Removido
+    // const passwordInput = document.getElementById('password'); // Removido
+    // const authMessage = document.getElementById('authMessage'); // Removido
     const appSection = document.getElementById('appSection');
     const displayUser = document.getElementById('displayUser');
-    const logoutBtn = document.getElementById('logoutBtn');
+    // const logoutBtn = document.getElementById('logoutBtn'); // Removido
     const transactionForm = document.getElementById('transactionForm');
     const dateInput = document.getElementById('date');
     const descInput = document.getElementById('desc');
@@ -177,8 +164,9 @@
     const reportSection = document.getElementById('reportSection');
     const reportContent = document.getElementById('reportContent');
 
-    // Dados do usuário logado
-    let currentUser = null;
+    // Dados do usuário (agora um usuário padrão)
+    // Para manter os dados anteriores, o "defaultUser" carregará o que estava salvo
+    let currentUser = "defaultUser"; // Definido um usuário padrão
 
     // Transações atuais em memória
     let transactions = [];
@@ -189,30 +177,8 @@
 
     // --------- Funções ---------
 
-    // Salvar usuários
-    function saveUsers(users) {
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-    // Recuperar usuários
-    function getUsers() {
-      const usersStr = localStorage.getItem('users');
-      if (!usersStr) return [];
-      try {
-        return JSON.parse(usersStr);
-      } catch {
-        return [];
-      }
-    }
-    // Salvar sessões
-    function saveSession(username) {
-      localStorage.setItem('sessionUser', username);
-    }
-    function getSession() {
-      return localStorage.getItem('sessionUser');
-    }
-    function clearSession() {
-      localStorage.removeItem('sessionUser');
-    }
+    // As funções saveUsers, getUsers, saveSession, getSession, clearSession foram removidas
+    // pois não há mais sistema de login.
 
     // Salvar transações do usuário
     function saveTransactions(username, trans) {
@@ -228,41 +194,13 @@
       }
     }
 
-    // Autenticação simples (login / cadastro)
-    authForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value.trim();
-      if (!username || !password) {
-        authMessage.textContent = 'Preencha todos os campos!';
-        return;
-      }
-
-      let users = getUsers();
-      let user = users.find(u => u.username === username);
-
-      if (user) {
-        if (user.password !== password) {
-          authMessage.textContent = 'Senha incorreta!';
-          return;
-        }
-        // Login OK
-      } else {
-        // Criar novo usuário
-        users.push({ username, password });
-        saveUsers(users);
-      }
-      currentUser = username;
-      saveSession(currentUser);
-      authMessage.textContent = '';
-      showApp();
-    });
+    // A lógica de autenticação (authForm.addEventListener) foi removida.
 
     // Mostrar app
     function showApp() {
-      authSection.classList.add('hidden');
-      appSection.classList.remove('hidden');
-      displayUser.textContent = currentUser;
+      // authSection.classList.add('hidden'); // Removido
+      appSection.classList.remove('hidden'); // Já não tem hidden na HTML
+      displayUser.textContent = "Usuário"; // Define um texto padrão
       loadTransactions();
       updateTable();
       updateResumo(transactions);
@@ -270,30 +208,17 @@
       updatePieChart();
     }
 
-    // Logout
-    logoutBtn.addEventListener('click', () => {
-      currentUser = null;
-      clearSession();
-      transactions = [];
-      appSection.classList.add('hidden');
-      authSection.classList.remove('hidden');
-      usernameInput.value = '';
-      passwordInput.value = '';
-      authMessage.textContent = '';
-      clearFilter();
-      if(monthlyChart) monthlyChart.destroy();
-      if(pieChart) pieChart.destroy();
-    });
+    // A lógica de logout (logoutBtn.addEventListener) foi removida.
 
     // Carregar transações do usuário
     function loadTransactions() {
-      if (!currentUser) return;
+      // currentUser já está definido como "defaultUser"
       transactions = getTransactions(currentUser);
     }
 
     // Salvar transações do usuário
     function saveUserTransactions() {
-      if (!currentUser) return;
+      // currentUser já está definido como "defaultUser"
       saveTransactions(currentUser, transactions);
     }
 
@@ -305,12 +230,14 @@
       let amount = parseFloat(amountInput.value);
       const type = typeInput.value;
       const payment = paymentInput.value;
+
       if (!date || !desc || isNaN(amount)) {
         alert('Preencha todos os campos corretamente!');
         return;
       }
       if (type === 'saida' && amount > 0) amount = -amount;
       if (type === 'entrada' && amount < 0) amount = Math.abs(amount);
+
       transactions.push({ date, desc, amount, id: Date.now(), type, payment });
       saveUserTransactions();
       updateTable();
@@ -474,6 +401,8 @@
       let entrada = 0;
       let saida = 0;
       filtered.forEach(t => {
+        // You might want a more sophisticated way to categorize based on description if needed
+        // For now, it takes the first word of the description.
         let category = t.desc.split(' ')[0];
         categories[category] = (categories[category] || 0) + t.amount;
         if (t.amount >= 0) entrada += t.amount;
@@ -531,8 +460,8 @@
         alert('Nenhuma transação para exportar.');
         return;
       }
-      const header = ['Data', 'Descrição', 'Valor'];
-      const rows = filtered.map(t => [t.date, t.desc, t.amount.toFixed(2)]);
+      const header = ['Data', 'Descrição', 'Valor', 'Pagamento'];
+      const rows = filtered.map(t => [t.date, t.desc, t.amount.toFixed(2), t.payment]);
       let csvContent = "data:text/csv;charset=utf-8," + [header, ...rows].map(e => e.join(",")).join("\n");
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
@@ -563,7 +492,8 @@
       doc.rect(14, y - 8, 182, 10, 'F');
       doc.text("Data", 16, y);
       doc.text("Descrição", 50, y);
-      doc.text("Valor", 160, y);
+      doc.text("Valor", 130, y);
+      doc.text("Pagamento", 160, y);
       doc.setTextColor(0,0,0);
       y += 10;
       filtered.forEach(t => {
@@ -573,7 +503,8 @@
         }
         doc.text(t.date, 16, y);
         doc.text(t.desc, 50, y);
-        doc.text(t.amount.toFixed(2), 160, y);
+        doc.text(t.amount.toFixed(2), 130, y);
+        doc.text(t.payment ? t.payment.charAt(0).toUpperCase() + t.payment.slice(1) : '', 160, y);
         y += 8;
       });
       const total = filtered.reduce((acc, t) => acc + t.amount, 0);
@@ -583,24 +514,36 @@
       doc.save(`relatorio_${currentUser}.pdf`);
     });
 
-    // Relatório por Cartão
+    // Relatório por Forma de Pagamento
     showReportBtn.addEventListener('click', () => {
-      gerarRelatorioCartoes();
+      gerarRelatorioPagamentos();
       reportSection.classList.toggle('hidden');
     });
 
-    function gerarRelatorioCartoes() {
+    function gerarRelatorioPagamentos() {
       const filtered = filterTransactions();
       let debito = filtered.filter(t => t.payment === 'debito');
       let credito = filtered.filter(t => t.payment === 'credito');
+      let dinheiro = filtered.filter(t => t.payment === 'dinheiro');
+      let aplicacoes = filtered.filter(t => t.payment === 'aplicacoes');
+
       let totalDebito = debito.reduce((acc, t) => acc + t.amount, 0);
       let totalCredito = credito.reduce((acc, t) => acc + t.amount, 0);
+      let totalDinheiro = dinheiro.reduce((acc, t) => acc + t.amount, 0);
+      let totalAplicacoes = aplicacoes.reduce((acc, t) => acc + t.amount, 0);
+
       let html = `
         <div class="mb-4">
           <span class="font-semibold">Total Débito:</span> <span class="${totalDebito < 0 ? 'text-red-600' : 'text-green-600'}">${totalDebito.toFixed(2)}</span>
         </div>
         <div class="mb-4">
           <span class="font-semibold">Total Crédito:</span> <span class="${totalCredito < 0 ? 'text-red-600' : 'text-green-600'}">${totalCredito.toFixed(2)}</span>
+        </div>
+        <div class="mb-4">
+          <span class="font-semibold">Total Dinheiro:</span> <span class="${totalDinheiro < 0 ? 'text-red-600' : 'text-green-600'}">${totalDinheiro.toFixed(2)}</span>
+        </div>
+        <div class="mb-4">
+          <span class="font-semibold">Total Aplicações:</span> <span class="${totalAplicacoes < 0 ? 'text-red-600' : 'text-green-600'}">${totalAplicacoes.toFixed(2)}</span>
         </div>
         <div class="mb-2 font-semibold">Transações Débito:</div>
         <ul class="mb-4 list-disc ml-6">
@@ -610,17 +553,22 @@
         <ul class="mb-2 list-disc ml-6">
           ${credito.map(t => `<li>${t.date} - ${t.desc} - <span class='${t.amount < 0 ? 'text-red-600' : 'text-green-600'}'>${t.amount.toFixed(2)}</span></li>`).join('') || '<li>Nenhuma</li>'}
         </ul>
+        <div class="mb-2 font-semibold">Transações Dinheiro:</div>
+        <ul class="mb-2 list-disc ml-6">
+          ${dinheiro.map(t => `<li>${t.date} - ${t.desc} - <span class='${t.amount < 0 ? 'text-red-600' : 'text-green-600'}'>${t.amount.toFixed(2)}</span></li>`).join('') || '<li>Nenhuma</li>'}
+        </ul>
+        <div class="mb-2 font-semibold">Transações Aplicações:</div>
+        <ul class="mb-2 list-disc ml-6">
+          ${aplicacoes.map(t => `<li>${t.date} - ${t.desc} - <span class='${t.amount < 0 ? 'text-red-600' : 'text-green-600'}'>${t.amount.toFixed(2)}</span></li>`).join('') || '<li>Nenhuma</li>'}
+        </ul>
       `;
       reportContent.innerHTML = html;
     }
 
-    // Inicializar app se já houver sessão
+    // Inicializar app diretamente
     (function init() {
-      const savedUser = getSession();
-      if (savedUser) {
-        currentUser = savedUser;
-        showApp();
-      }
+      // Como não há mais login, simplesmente inicializamos o app com o usuário padrão.
+      showApp();
     })();
 
   })();
